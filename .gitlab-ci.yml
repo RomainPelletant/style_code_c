@@ -1,0 +1,9 @@
+image: debian:stable
+
+stages:
+  - analyse
+
+analyse:
+  stage: analyse
+  script:
+    - ./ci/style/line_limit.sh -l 80 -t 8 -e '^(.*/\.git/.*)$' .
