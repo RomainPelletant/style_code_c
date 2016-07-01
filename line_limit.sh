@@ -33,10 +33,14 @@ $CMD [OPTION]... [TARGET]
 		posix extended regex expression
 
 	-g, --git
-		do not exclude folders named .git
+		do not exclude folders named .git automatically
+		note that it adds to the exclude regex with OR internally
+		-e, --exclude is therefore always in effect
 
 	-s, --submodules
-		do not exclude git submodules
+		do not exclude git submodules automatically
+		note that it adds to the exclude regex with OR internally
+		-e, --exclude is therefore always in effect
 
 		by default git submodules are excluded
 		by parsing \$PWD/.gitmodules if it exists
