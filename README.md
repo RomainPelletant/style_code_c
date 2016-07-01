@@ -16,14 +16,32 @@ be used to indicate which files or paths should be excluded.
 ```
 ./line_limit.sh [OPTION]... [TARGET]
 
-        -l, --limit
+        -l, --limit <limit>
                 line limit in characters
                 defaults to 80
 
-        -t, --tab-size
+        -t, --tab-size <size>
                 tab size in characters
                 defaults to 8
 
-        -e, --exclude
+        -e, --exclude <expr>
                 posix extended regex expression
+
+        -g, --git
+                also check the .git folder
+                defaults to ignoring all .git folders
+
+        -s, --submodules
+                also check git submodules
+                defaults to parsing $PWD/.gitmodules
+                and excluding all paths found
+
+        -v, --verbose
+                print configuration prior to execution
+
+        -q, --quiet
+                only print files that exceed limit
+
+        -h, --help
+                print this help and exit
 ```
