@@ -33,13 +33,14 @@ $CMD [OPTION]... [TARGET]
 		posix extended regex expression
 
 	-g, --git
-		also check the .git folder
-		defaults to ignoring all .git folders
+		do not exclude folders named .git
 
 	-s, --submodules
-		also check git submodules
-		defaults to parsing \$PWD/.gitmodules
-		and excluding all paths found
+		do not exclude git submodules
+
+		by default git submodules are excluded
+		by parsing \$PWD/.gitmodules if it exists
+		if it does not exist nothing is excluded
 
 	-v, --verbose
 		print configuration prior to execution
