@@ -33,6 +33,7 @@ path. Used for enforcing line length limits automatically.
                 by default git submodules are excluded
                 by parsing $PWD/.gitmodules if it exists
                 if it does not exist nothing is excluded
+                the same applies to \$PWD/.gitmodules itself
 
         -v, --verbose
                 print configuration prior to execution
