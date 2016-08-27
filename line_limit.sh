@@ -7,7 +7,6 @@ unset EXCLUDE
 unset GIT
 INDENT=true
 LIMIT=80
-unset QUIET
 unset SUBMODULES
 TAB_SIZE=8
 unset VERBOSE
@@ -49,9 +48,6 @@ $CMD [OPTION]... [TARGET]
 		line limit in characters
 		defaults to 80
 
-	-q, --quiet
-		only print files that exceed limit
-
 	-s, --submodules
 		do not exclude git submodules automatically
 		note that it adds to the exclude regex with OR internally
@@ -67,7 +63,7 @@ $CMD [OPTION]... [TARGET]
 		defaults to 8
 
 	-v, --verbose
-		print configuration prior to execution"
+		also print out results for files that pass tests"
 
 	return 0
 }
@@ -100,9 +96,6 @@ do
 	-l|--limit)
 		LIMIT="$2"
 		shift
-		;;
-	-q|--quiet)
-		QUIET=true
 		;;
 	-s|--submodules)
 		SUBMODULES=true
@@ -156,14 +149,6 @@ then
 	EXCLUDE="${EXCLUDE%?}$)"
 fi
 
-# print configuration if verbose
-if [[ $VERBOSE ]]
-then
-	printf 'LIMIT: %s\n' "$LIMIT"
-	printf 'TAB_SIZE: %s\n' "$TAB_SIZE"
-	printf 'EXCLUDE: %s\n' "$EXCLUDE"
-fi
-
 # cd and unset failure var
 cd "$TARGET"
 unset FAIL
@@ -176,9 +161,9 @@ do
 		| awk "{ if (length(\$0) > $LIMIT) print \"y\" }") ]]
 	then
 		FAIL=true
-		printf 'FAIL %s (limit)\n' "$file"
+		printf 'LIMIT  FAIL %s\n' "$file"
 	else
-		[[ ! $QUIET ]] && printf 'PASS %s (limit)\n' "$file"
+		[[ $VERBOSE ]] && printf 'LIMIT  PASS %s\n' "$file"
 	fi
 
 	# continue if indent disabled
@@ -197,7 +182,7 @@ do
 		indent_match=$'^\t* +\t*.'
 		;;
 	*)
-		printf 'SKIP %s (indent)\n' "$file"
+		[[ $VERBOSE ]] && printf 'INDENT SKIP %s\n' "$file"
 		continue
 		;;
 	esac
@@ -206,9 +191,9 @@ do
 	if [[ $(grep -E "$indent_match" "$file") ]]
 	then
 		FAIL=true
-		printf 'FAIL %s (indent)\n' "$file"
+		printf 'INDENT FAIL %s\n' "$file"
 	else
-		[[ ! $QUIET ]] && printf 'PASS %s (indent)\n' "$file"
+		[[ $VERBOSE ]] && printf 'INDENT PASS %s\n' "$file"
 	fi
 done \
 	< <(find . \

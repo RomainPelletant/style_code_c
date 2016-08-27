@@ -24,12 +24,21 @@ path. Used for enforcing line length limits automatically.
         -h, --help
                 print this help and exit
 
+        -i, --ignore-indent
+                disable automatic indent type checking
+                this feature is enabled by default
+
+                the first line of a file that starts with either
+                a tab OR a space and contains non-whitespace afterwards will
+                determine the indent checking to be used for the
+                rest of the file
+
+                if the first indent is mixed, as in contains both
+                tabs and spaces, the very first character will be used
+
         -l, --limit <limit>
                 line limit in characters
                 defaults to 80
-
-        -q, --quiet
-                only print files that exceed limit
 
         -s, --submodules
                 do not exclude git submodules automatically
@@ -46,5 +55,5 @@ path. Used for enforcing line length limits automatically.
                 defaults to 8
 
         -v, --verbose
-                print configuration prior to execution
+                also print out results for files that pass tests
 ```
