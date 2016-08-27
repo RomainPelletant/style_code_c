@@ -3,13 +3,13 @@
 set -e
 
 # defaults
-LIMIT=80
-TAB_SIZE=8
 unset EXCLUDE
 unset GIT
+INDENT=true
+LIMIT=80
 unset SUBMODULES
+TAB_SIZE=8
 unset VERBOSE
-unset QUIET
 unset TARGET
 
 # constants
@@ -21,14 +21,6 @@ function print_help()
 	printf '%s\n' "\
 $CMD [OPTION]... [TARGET]
 
-	-l, --limit <limit>
-		line limit in characters
-		defaults to 80
-
-	-t, --tab-size <size>
-		tab size in characters
-		defaults to 8
-
 	-e, --exclude <expr>
 		posix extended regex expression
 
@@ -36,6 +28,25 @@ $CMD [OPTION]... [TARGET]
 		do not exclude folders named .git automatically
 		note that it adds to the exclude regex with OR internally
 		-e, --exclude is therefore always in effect
+
+	-h, --help
+		print this help and exit
+
+	-i, --ignore-indent
+		disable automatic indent type checking
+		this feature is enabled by default
+
+		the first line of a file that starts with either
+		a tab OR a space and contains non-whitespace afterwards will
+		determine the indent checking to be used for the
+		rest of the file
+
+		if the first indent is mixed, as in contains both
+		tabs and spaces, the very first character will be used
+
+	-l, --limit <limit>
+		line limit in characters
+		defaults to 80
 
 	-s, --submodules
 		do not exclude git submodules automatically
@@ -47,15 +58,13 @@ $CMD [OPTION]... [TARGET]
 		if it does not exist nothing is excluded
 		the same applies to \$PWD/.gitmodules itself
 
+	-t, --tab-size <size>
+		tab size in characters
+		defaults to 8
+
 	-v, --verbose
-		print configuration prior to execution
+		also print out results for files that pass tests"
 
-	-q, --quiet
-		only print files that exceed limit
-
-	-h, --help
-		print this help and exit"
-	
 	return 0
 }
 
@@ -70,14 +79,6 @@ fi
 while (( $# > 0 ))
 do
 	case "$1" in
-	-l|--limit)
-		LIMIT="$2"
-		shift
-		;;
-	-t|--tab-size)
-		TAB_SIZE="$2"
-		shift
-		;;
 	-e|--exclude)
 		EXCLUDE="$2"
 		shift
@@ -85,18 +86,26 @@ do
 	-g|--git)
 		GIT=true
 		;;
-	-s|--submodules)
-		SUBMODULES=true
-		;;
-	-v|--verbose)
-		VERBOSE=true
-		;;
-	-q|--quiet)
-		QUIET=true
-		;;
 	-h|--help)
 		print_help
 		exit 0
+		;;
+	-i|--ignore-indent)
+		unset INDENT
+		;;
+	-l|--limit)
+		LIMIT="$2"
+		shift
+		;;
+	-s|--submodules)
+		SUBMODULES=true
+		;;
+	-t|--tab-size)
+		TAB_SIZE="$2"
+		shift
+		;;
+	-v|--verbose)
+		VERBOSE=true
 		;;
 	*)
 		# target only allowed as final option
@@ -140,14 +149,6 @@ then
 	EXCLUDE="${EXCLUDE%?}$)"
 fi
 
-# print configuration if verbose
-if [[ $VERBOSE ]]
-then
-	printf 'LIMIT: %s\n' "$LIMIT"
-	printf 'TAB_SIZE: %s\n' "$TAB_SIZE"
-	printf 'EXCLUDE: %s\n' "$EXCLUDE"
-fi
-
 # cd and unset failure var
 cd "$TARGET"
 unset FAIL
@@ -160,9 +161,39 @@ do
 		| awk "{ if (length(\$0) > $LIMIT) print \"y\" }") ]]
 	then
 		FAIL=true
-		printf 'FAIL %s\n' "$file"
+		printf 'LIMIT  FAIL %s\n' "$file"
 	else
-		[[ ! $QUIET ]] && printf 'PASS %s\n' "$file"
+		[[ $VERBOSE ]] && printf 'LIMIT  PASS %s\n' "$file"
+	fi
+
+	# continue if indent disabled
+	[[ ! $INDENT ]] && continue
+
+	# determine indent type for file
+	# grep returns 1 when no match
+	set +e
+	indent_type=$(grep -Eo -m 1 $'^[ \t]+.' "$file" | grep -o $'^[ \t]')
+	set -e
+	case "$indent_type" in
+	$' ')
+		indent_match=$'^ *\t+ *.'
+		;;
+	$'\t')
+		indent_match=$'^\t* +\t*.'
+		;;
+	*)
+		[[ $VERBOSE ]] && printf 'INDENT SKIP %s\n' "$file"
+		continue
+		;;
+	esac
+
+	# check for violating lines
+	if [[ $(grep -E "$indent_match" "$file") ]]
+	then
+		FAIL=true
+		printf 'INDENT FAIL %s\n' "$file"
+	else
+		[[ $VERBOSE ]] && printf 'INDENT PASS %s\n' "$file"
 	fi
 done \
 	< <(find . \
