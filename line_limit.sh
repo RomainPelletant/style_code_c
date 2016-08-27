@@ -21,14 +21,6 @@ function print_help()
 	printf '%s\n' "\
 $CMD [OPTION]... [TARGET]
 
-	-l, --limit <limit>
-		line limit in characters
-		defaults to 80
-
-	-t, --tab-size <size>
-		tab size in characters
-		defaults to 8
-
 	-e, --exclude <expr>
 		posix extended regex expression
 
@@ -36,6 +28,16 @@ $CMD [OPTION]... [TARGET]
 		do not exclude folders named .git automatically
 		note that it adds to the exclude regex with OR internally
 		-e, --exclude is therefore always in effect
+
+	-h, --help
+		print this help and exit
+
+	-l, --limit <limit>
+		line limit in characters
+		defaults to 80
+
+	-q, --quiet
+		only print files that exceed limit
 
 	-s, --submodules
 		do not exclude git submodules automatically
@@ -47,15 +49,13 @@ $CMD [OPTION]... [TARGET]
 		if it does not exist nothing is excluded
 		the same applies to \$PWD/.gitmodules itself
 
+	-t, --tab-size <size>
+		tab size in characters
+		defaults to 8
+
 	-v, --verbose
-		print configuration prior to execution
+		print configuration prior to execution"
 
-	-q, --quiet
-		only print files that exceed limit
-
-	-h, --help
-		print this help and exit"
-	
 	return 0
 }
 
@@ -70,14 +70,6 @@ fi
 while (( $# > 0 ))
 do
 	case "$1" in
-	-l|--limit)
-		LIMIT="$2"
-		shift
-		;;
-	-t|--tab-size)
-		TAB_SIZE="$2"
-		shift
-		;;
 	-e|--exclude)
 		EXCLUDE="$2"
 		shift
@@ -85,18 +77,26 @@ do
 	-g|--git)
 		GIT=true
 		;;
-	-s|--submodules)
-		SUBMODULES=true
+	-h|--help)
+		print_help
+		exit 0
 		;;
-	-v|--verbose)
-		VERBOSE=true
+	-l|--limit)
+		LIMIT="$2"
+		shift
 		;;
 	-q|--quiet)
 		QUIET=true
 		;;
-	-h|--help)
-		print_help
-		exit 0
+	-s|--submodules)
+		SUBMODULES=true
+		;;
+	-t|--tab-size)
+		TAB_SIZE="$2"
+		shift
+		;;
+	-v|--verbose)
+		VERBOSE=true
 		;;
 	*)
 		# target only allowed as final option
