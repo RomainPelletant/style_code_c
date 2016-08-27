@@ -3,13 +3,14 @@
 set -e
 
 # defaults
-LIMIT=80
-TAB_SIZE=8
 unset EXCLUDE
 unset GIT
-unset SUBMODULES
-unset VERBOSE
+INDENT=true
+LIMIT=80
 unset QUIET
+unset SUBMODULES
+TAB_SIZE=8
+unset VERBOSE
 unset TARGET
 
 # constants
@@ -31,6 +32,18 @@ $CMD [OPTION]... [TARGET]
 
 	-h, --help
 		print this help and exit
+
+	-i, --ignore-indent
+		disable automatic indent type checking
+		this feature is enabled by default
+
+		the first line of a file that starts with either
+		a tab OR a space and contains non-whitespace afterwards will
+		determine the indent checking to be used for the
+		rest of the file
+
+		if the first indent is mixed, as in contains both
+		tabs and spaces, the very first character will be used
 
 	-l, --limit <limit>
 		line limit in characters
@@ -80,6 +93,9 @@ do
 	-h|--help)
 		print_help
 		exit 0
+		;;
+	-i|--ignore-indent)
+		unset INDENT
 		;;
 	-l|--limit)
 		LIMIT="$2"
@@ -160,9 +176,39 @@ do
 		| awk "{ if (length(\$0) > $LIMIT) print \"y\" }") ]]
 	then
 		FAIL=true
-		printf 'FAIL %s\n' "$file"
+		printf 'FAIL %s (limit)\n' "$file"
 	else
-		[[ ! $QUIET ]] && printf 'PASS %s\n' "$file"
+		[[ ! $QUIET ]] && printf 'PASS %s (limit)\n' "$file"
+	fi
+
+	# continue if indent disabled
+	[[ ! $INDENT ]] && continue
+
+	# determine indent type for file
+	# grep returns 1 when no match
+	set +e
+	indent_type=$(grep -Eo -m 1 $'^[ \t]+.' "$file" | grep -o $'^[ \t]')
+	set -e
+	case "$indent_type" in
+	$' ')
+		indent_match=$'^ *\t+ *.'
+		;;
+	$'\t')
+		indent_match=$'^\t* +\t*.'
+		;;
+	*)
+		printf 'SKIP %s (indent)\n' "$file"
+		continue
+		;;
+	esac
+
+	# check for violating lines
+	if [[ $(grep -E "$indent_match" "$file") ]]
+	then
+		FAIL=true
+		printf 'FAIL %s (indent)\n' "$file"
+	else
+		[[ ! $QUIET ]] && printf 'PASS %s (indent)\n' "$file"
 	fi
 done \
 	< <(find . \
