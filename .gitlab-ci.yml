@@ -6,4 +6,4 @@ stages:
 analyse:
   stage: analyse
   script:
-    - ./ci/style/line_limit.sh -l 80 -t 8 -v .
+    - ./line_limit.sh -l 80 -t 8 .

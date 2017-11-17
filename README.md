@@ -1,11 +1,9 @@
-# CI Utilities - Style
+# CI CD / Style
 
 Various scripts that check code style and can easily be automated.
+Currently just one.
 
-Configuration flexibility is of very high importance to allow the scripts to be
-easily used in a wide variety of configurations.
-
-## line_limit.sh
+## line\_limit.sh
 
 Script that checks the line length of all text files in the specified target
 path. Used for enforcing line length limits automatically.
