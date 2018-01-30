@@ -1,0 +1,14 @@
+/* when the file begins with a
+ * c-style comment like this
+ */
+
+	/* it should not use ' *' to determine
+	 * that indent type is SPACE
+	 */
+
+/* because clearly,
+ * indented with TABS
+ */
+
+	like
+		this

@@ -1,0 +1,13 @@
+a file indented with tabs
+	like this
+
+/* a regular
+ * multiline
+ * c-comment
+ */
+
+	/* some indented
+	 * multiline
+	 * c-comment
+	 */
+	 foo      bar	foo
