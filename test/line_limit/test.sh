@@ -8,8 +8,8 @@ function msg_v()
 unset VERBOSE
 [[ "$1" == '-v' || "$1" == '--verbose' ]] && VERBOSE=true
 
-TARGET='line_limit/pass'
-TMP="$(../line_limit.sh -v -i "$TARGET")"
+TARGET='pass'
+TMP="$(../../line_limit.sh -v -i "$TARGET")"
 msg_v "$TMP"
 if [[ $(echo "$TMP" | grep -Ev '^[A-Z]+ +PASS ') ]]
 then
@@ -18,8 +18,8 @@ then
 fi
 msg_v "test for '$TARGET' passed"
 
-TARGET='line_limit/fail/limit'
-TMP="$(../line_limit.sh -v "$TARGET")"
+TARGET='fail/limit'
+TMP="$(../../line_limit.sh -v "$TARGET")"
 msg_v "$TMP"
 if [[ $(echo "$TMP" | grep -Ev 'LIMIT +FAIL ') ]]
 then
@@ -28,8 +28,8 @@ then
 fi
 msg_v "test for '$TARGET' passed"
 
-TARGET='line_limit/fail/indent'
-TMP="$(../line_limit.sh -v -i "$TARGET")"
+TARGET='fail/indent'
+TMP="$(../../line_limit.sh -v -i "$TARGET")"
 msg_v "$TMP"
 if [[ $(echo "$TMP" | grep -Ev '^(LIMIT .*|INDENT +FAIL) ') ]]
 then

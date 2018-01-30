@@ -7,10 +7,10 @@ stages:
 line_limit:
   stage: analyse
   script:
-    - ./line_limit.sh -e '^./test/line_limit/.*$' .
+    - ./line_limit.sh -e '^\./test/line_limit/.*$' -i .
 
 test/line_limit:
   stage: test
   script:
-    - cd test
-    - ./line_limit.sh -v
+    - cd test/line_limit
+    - ./test.sh -v
