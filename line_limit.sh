@@ -5,7 +5,7 @@ set -e
 # defaults
 unset EXCLUDE
 unset GIT
-INDENT=true
+unset INDENT
 LIMIT=80
 unset SUBMODULES
 TAB_SIZE=8
@@ -32,9 +32,8 @@ $CMD [OPTION]... [TARGET]
 	-h, --help
 		print this help and exit
 
-	-i, --ignore-indent
-		disable automatic indent type checking
-		this feature is enabled by default
+	-i, --indent
+		enable automatic indent type checking
 
 		the first line of a file that starts with either
 		a tab OR a space and contains non-whitespace afterwards will
@@ -43,6 +42,9 @@ $CMD [OPTION]... [TARGET]
 
 		if the first indent is mixed, as in contains both
 		tabs and spaces, the very first character will be used
+
+		an exception is made for '\\t *' for multi-line c-style comments
+		during both indent detection and indent checking
 
 	-l, --limit <limit>
 		line limit in characters
@@ -90,8 +92,8 @@ do
 		print_help
 		exit 0
 		;;
-	-i|--ignore-indent)
-		unset INDENT
+	-i|--indent)
+		INDENT=true
 		;;
 	-l|--limit)
 		LIMIT="$2"
@@ -170,16 +172,20 @@ do
 	[[ ! $INDENT ]] && continue
 
 	# determine indent type for file
+	# do not match c-style block comments to avoid misdetection as space
 	# grep returns 1 when no match
 	set +e
-	indent_type=$(grep -Eo -m 1 $'^[ \t]+.' "$file" | grep -o $'^[ \t]')
+	indent_type="$(grep -Eo -m 1 $'^[ \t]+[^ \t\*]' "$file")"
 	set -e
+	indent_type="${indent_type:0:1}"
 	case "$indent_type" in
 	$' ')
-		indent_match=$'^ *\t+ *.'
+		indent_match=$'^ *[^\t]'
 		;;
 	$'\t')
-		indent_match=$'^\t* +\t*.'
+		# do not match for c-style block comments /*\n *\n */
+		# the non-opening lines will be "\t* \*"
+		indent_match=$'^\t*([^ ]| \*)'
 		;;
 	*)
 		[[ $VERBOSE ]] && printf 'INDENT SKIP %s\n' "$file"
@@ -188,7 +194,7 @@ do
 	esac
 
 	# check for violating lines
-	if [[ $(grep -E "$indent_match" "$file") ]]
+	if [[ $(grep -Ev "$indent_match" "$file") ]]
 	then
 		FAIL=true
 		printf 'INDENT FAIL %s\n' "$file"
