@@ -1,0 +1,6 @@
+when
+	indenting with tabs
+
+	/* a c-style comment
+	  * with double-space (wrong) alignment
+	 * should fail */
