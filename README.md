@@ -22,9 +22,8 @@ path. Used for enforcing line length limits automatically.
         -h, --help
                 print this help and exit
 
-        -i, --ignore-indent
-                disable automatic indent type checking
-                this feature is enabled by default
+        -i, --indent
+                enable automatic indent type checking
 
                 the first line of a file that starts with either
                 a tab OR a space and contains non-whitespace afterwards will
@@ -33,6 +32,9 @@ path. Used for enforcing line length limits automatically.
 
                 if the first indent is mixed, as in contains both
                 tabs and spaces, the very first character will be used
+
+                an exception is made for '\t *' for multi-line c-style comments
+                during both indent detection and indent checking
 
         -l, --limit <limit>
                 line limit in characters
