@@ -175,17 +175,17 @@ do
 	# do not match c-style block comments to avoid misdetection as space
 	# grep returns 1 when no match
 	set +e
-	indent_type="$(grep -Eo -m 1 $'^[ \t]+[^ \t\*]' "$file")"
+	indent_type="$(grep -Eo -m 1 $'^[ \t]+[^ \t\\*]' "$file")"
 	set -e
 	indent_type="${indent_type:0:1}"
 	case "$indent_type" in
 	$' ')
-		indent_match=$'^ *[^\t]'
+		indent_match=$'(^$)|(^ *[^ \t])'
 		;;
 	$'\t')
 		# do not match for c-style block comments /*\n *\n */
 		# the non-opening lines will be "\t* \*"
-		indent_match=$'^\t*([^ ]| \*)'
+		indent_match=$'(^$)|(^\t*([^\t ]| \\*))'
 		;;
 	*)
 		[[ $VERBOSE ]] && printf 'INDENT SKIP %s\n' "$file"
@@ -194,7 +194,7 @@ do
 	esac
 
 	# check for violating lines
-	if [[ $(grep -Ev "$indent_match" "$file") ]]
+	if [[ $(grep -Ev -m 1 "$indent_match" "$file") ]]
 	then
 		FAIL=true
 		printf 'INDENT FAIL %s\n' "$file"
