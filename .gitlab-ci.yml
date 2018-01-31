@@ -6,11 +6,13 @@ stages:
 
 regex_check:
   stage: analyse
+  allow_failure: true
   script:
     - ./regex_check.sh -v .
 
 line_limit:
   stage: analyse
+  allow_failure: true
   script:
     - ./line_limit.sh -e '^\./test/line_limit/' -i -v .
 
