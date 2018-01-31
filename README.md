@@ -129,6 +129,7 @@ checking for consistent indention style on a per-file basis.
 
         -v, --verbose
                 print out results for files that pass checks
+                specify twice to print exclude regex prior to grep
 
         EXIT CODE
                 0       all checked files compliant

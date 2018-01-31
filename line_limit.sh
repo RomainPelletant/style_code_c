@@ -9,7 +9,7 @@ unset INDENT
 LIMIT=80
 unset SUBMODULES
 TAB_SIZE=8
-unset VERBOSE
+VERBOSE=0
 unset TARGET
 
 # vars
@@ -64,6 +64,7 @@ $0 [OPTION]... [TARGET]
 
 	-v, --verbose
 		print out results for files that pass checks
+		specify twice to print exclude regex prior to grep
 
 	EXIT CODE
 		0	all checked files compliant
@@ -86,6 +87,11 @@ do
 	case "$1" in
 	-e|--exclude)
 		EXCLUDE="$2"
+		# make it full-path covering regex (find wants it)
+		# prefix ^.* if not starting with ^
+		[[ ${EXCLUDE:0:1} != '^' ]] && EXCLUDE="^.*$EXCLUDE"
+		# append .*$ is not ending with $
+		[[ ${EXCLUDE: -1} != '$' ]] && EXCLUDE="${EXCLUDE}.*\$"
 		shift
 		;;
 	-g|--git)
@@ -110,7 +116,7 @@ do
 		shift
 		;;
 	-v|--verbose)
-		VERBOSE=true
+		(( ++VERBOSE ))
 		;;
 	*)
 		# target only allowed as final option
@@ -141,24 +147,22 @@ fi
 # exclude git submodules if enabled
 if [[ ! $SUBMODULES && -f ./.gitmodules ]]
 then
-	# add entry block
-	[[ $EXCLUDE ]] && EXCLUDE+='|'
-	EXCLUDE+='(^'
-
 	# exclude ./.gitmodules
-	EXCLUDE+='(\./\.gitmodules)|'
+	[[ $EXCLUDE ]] && EXCLUDE+='|'
+	EXCLUDE+='(^\./\.gitmodules$)'
 
 	# add module paths
 	while read module
 	do
-		EXCLUDE+="(\\$module/.*)|"
+		EXCLUDE+="|(^$module/.*$)"
 	done \
 		< <(grep -o $'^[ \t]*path = .*' ./.gitmodules \
-			| sed 's/path = /.\//')
-
-	# remove trailing |, add exit block
-	EXCLUDE="${EXCLUDE%?}$)"
+			| sed $'s/[ \t]*path = /.\//' \
+			| sed $'s/\./\\\\./g')
 fi
+
+# print exclude regex if verbose enough
+(( $VERBOSE > 1 )) && printf '%s\n' "$(echo "$EXCLUDE" | sed 's/\t/\\t/g')"
 
 # loop over all files in path
 while IFS= read -r -d '' file
@@ -170,7 +174,7 @@ do
 		FAIL=true
 		printf 'LIMIT  FAIL %s\n' "$file"
 	else
-		[[ $VERBOSE ]] && printf 'LIMIT  PASS %s\n' "$file"
+		(( $VERBOSE > 0 )) && printf 'LIMIT  PASS %s\n' "$file"
 	fi
 
 	# continue if indent disabled
@@ -193,7 +197,7 @@ do
 		indent_match=$'(^$)|(^\t*([^\t ]| \\*))'
 		;;
 	*)
-		[[ $VERBOSE ]] && printf 'INDENT SKIP %s\n' "$file"
+		(( $VERBOSE > 0 )) && printf 'INDENT SKIP %s\n' "$file"
 		continue
 		;;
 	esac
@@ -204,7 +208,7 @@ do
 		FAIL=true
 		printf 'INDENT FAIL %s\n' "$file"
 	else
-		[[ $VERBOSE ]] && printf 'INDENT PASS %s\n' "$file"
+		(( $VERBOSE > 0 )) && printf 'INDENT PASS %s\n' "$file"
 	fi
 done \
 	< <(find . \
