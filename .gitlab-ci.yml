@@ -4,6 +4,11 @@ stages:
   - analyse
   - test
 
+regex_check:
+  stage: analyse
+  script:
+    - ./regex_check.sh -v
+
 line_limit:
   stage: analyse
   script:
