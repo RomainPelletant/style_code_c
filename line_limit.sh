@@ -128,6 +128,9 @@ done
 # cd to target before parsing anything
 cd "$TARGET"
 
+# wrap the original exclude in parentheses
+[[ $EXCLUDE ]] && EXCLUDE="($EXCLUDE)"
+
 # exclude .git if enabled
 if [[ ! $GIT ]]
 then
