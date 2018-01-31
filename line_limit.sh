@@ -12,22 +12,26 @@ TAB_SIZE=8
 unset VERBOSE
 unset TARGET
 
-# constants
-readonly CMD="$0"
+# vars
+unset FAIL
 
 # functions
 function print_help()
 {
 	printf '%s\n' "\
-$CMD [OPTION]... [TARGET]
+$0 [OPTION]... [TARGET]
 
 	-e, --exclude <expr>
-		posix extended regex expression
+		posix extended regular expression
+		do specify the leading ./ for absolute expressions
+
+		on most shells use \$'regex' instead of 'regex' to avoid
+		automatic expansion of characters like \\t
+
+		will override a previous value
 
 	-g, --git
 		do not exclude folders named .git automatically
-		note that it adds to the exclude regex with OR internally
-		-e, --exclude is therefore always in effect
 
 	-h, --help
 		print this help and exit
@@ -48,24 +52,23 @@ $CMD [OPTION]... [TARGET]
 
 	-l, --limit <limit>
 		line limit in characters
-		defaults to 80
+		defaults to '$LIMIT'
 
 	-s, --submodules
 		do not exclude git submodules automatically
-		note that it adds to the exclude regex with OR internally
-		-e, --exclude is therefore always in effect
-
-		by default git submodules are excluded
-		by parsing \$PWD/.gitmodules if it exists
-		if it does not exist nothing is excluded
-		the same applies to \$PWD/.gitmodules itself
+		applies to both the definition file and submodule paths
 
 	-t, --tab-size <size>
 		tab size in characters
-		defaults to 8
+		defaults to '$TAB_SIZE'
 
 	-v, --verbose
-		also print out results for files that pass tests"
+		print out results for files that pass checks
+
+	EXIT CODE
+		0	all checked files compliant
+		1	at least one non-compliant file
+		*	when any command fails because of 'set -e'"
 
 	return 0
 }
@@ -120,7 +123,10 @@ do
 done
 
 # verify options
-[[ ! -e $TARGET ]] && printf '%s\n' 'invalid target' && exit 1
+[[ ! -d $TARGET ]] && printf '%s\n' 'invalid target (not a dir)' && exit 1
+
+# cd to target before parsing anything
+cd "$TARGET"
 
 # exclude .git if enabled
 if [[ ! $GIT ]]
@@ -144,16 +150,12 @@ then
 	do
 		EXCLUDE+="(\\$module/.*)|"
 	done \
-		< <(grep -o 'path = .*' ./.gitmodules \
+		< <(grep -o $'^[ \t]*path = .*' ./.gitmodules \
 			| sed 's/path = /.\//')
 
 	# remove trailing |, add exit block
 	EXCLUDE="${EXCLUDE%?}$)"
 fi
-
-# cd and unset failure var
-cd "$TARGET"
-unset FAIL
 
 # loop over all files in path
 while IFS= read -r -d '' file
@@ -205,7 +207,7 @@ done \
 	< <(find . \
 	-regextype posix-extended \
 	-type f \
-	-not -regex "$EXCLUDE" \
+	\! -regex "$EXCLUDE" \
 	-exec grep -Iq . '{}' \; \
 	-and -print0)
 

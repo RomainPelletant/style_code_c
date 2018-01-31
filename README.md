@@ -80,18 +80,23 @@ flexible enough to be used in many other ways that deal with regex compliancy.
 ## line\_limit.sh
 
 Script that checks the line length of all text files in the specified target
-path. Used for enforcing line length limits automatically.
+path. Used for enforcing line length limits automatically. It also supports
+checking for consistent indention style on a per-file basis.
 
 ```
 ./line_limit.sh [OPTION]... [TARGET]
 
         -e, --exclude <expr>
-                posix extended regex expression
+                posix extended regular expression
+                do specify the leading ./ for absolute expressions
+
+                on most shells use $'regex' instead of 'regex' to avoid
+                automatic expansion of characters like \t
+
+                will override a previous value
 
         -g, --git
                 do not exclude folders named .git automatically
-                note that it adds to the exclude regex with OR internally
-                -e, --exclude is therefore always in effect
 
         -h, --help
                 print this help and exit
@@ -112,22 +117,21 @@ path. Used for enforcing line length limits automatically.
 
         -l, --limit <limit>
                 line limit in characters
-                defaults to 80
+                defaults to '80'
 
         -s, --submodules
                 do not exclude git submodules automatically
-                note that it adds to the exclude regex with OR internally
-                -e, --exclude is therefore always in effect
-
-                by default git submodules are excluded
-                by parsing $PWD/.gitmodules if it exists
-                if it does not exist nothing is excluded
-                the same applies to $PWD/.gitmodules itself
+                applies to both the definition file and submodule paths
 
         -t, --tab-size <size>
                 tab size in characters
-                defaults to 8
+                defaults to '8'
 
         -v, --verbose
-                also print out results for files that pass tests
+                print out results for files that pass checks
+
+        EXIT CODE
+                0       all checked files compliant
+                1       at least one non-compliant file
+                *       when any command fails because of 'set -e'
 ```
