@@ -7,7 +7,7 @@ stages:
 regex_check:
   stage: analyse
   script:
-    - ./regex_check.sh -v
+    - ./regex_check.sh -v .
 
 line_limit:
   stage: analyse
