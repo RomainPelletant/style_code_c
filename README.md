@@ -28,9 +28,6 @@ flexible enough to be used in many other ways that deal with regex compliancy.
                 do not specify the leading ./
                 if you need the ./ prefix, use --output-prefix
 
-                on most shells use $'regex' instead of 'regex' to avoid
-                automatic expansion of characters like \t
-
                 can be specified multiple times
 
         -f, --exclude-file <glob>
@@ -61,9 +58,6 @@ flexible enough to be used in many other ways that deal with regex compliancy.
                 posix extended regular expression for contents marked as valid
                 defaults to ASCII-only $'^[[:print:]\t]*$'
 
-                on most shells use $'regex' instead of 'regex' for c-style
-                automatic expansion of characters like \t
-
         -s, --submodules
                 do not exclude git submodules automatically
 
@@ -89,9 +83,6 @@ checking for consistent indention style on a per-file basis.
         -e, --exclude <expr>
                 posix extended regular expression
                 do specify the leading ./ for absolute expressions
-
-                on most shells use $'regex' instead of 'regex' to avoid
-                automatic expansion of characters like \t
 
                 will override a previous value
 

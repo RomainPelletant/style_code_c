@@ -25,9 +25,6 @@ $0 [OPTION]... [TARGET]
 		posix extended regular expression
 		do specify the leading ./ for absolute expressions
 
-		on most shells use \$'regex' instead of 'regex' to avoid
-		automatic expansion of characters like \\t
-
 		will override a previous value
 
 	-g, --git

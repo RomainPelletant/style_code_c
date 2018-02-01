@@ -32,9 +32,6 @@ $0 [OPTION]... [TARGET]
 		do not specify the leading ./
 		if you need the ./ prefix, use --output-prefix
 
-		on most shells use \$'regex' instead of 'regex' to avoid
-		automatic expansion of characters like \\t
-
 		can be specified multiple times
 
 	-f, --exclude-file <glob>
@@ -64,9 +61,6 @@ $0 [OPTION]... [TARGET]
 	-r, --regex
 		posix extended regular expression for contents marked as valid
 		defaults to ASCII-only \$'$(echo "$REGEX" | sed 's/\t/\\t/g')'
-
-		on most shells use \$'regex' instead of 'regex' for c-style
-		automatic expansion of characters like \\t
 
 	-s, --submodules
 		do not exclude git submodules automatically
