@@ -9,25 +9,26 @@ unset INDENT
 LIMIT=80
 unset SUBMODULES
 TAB_SIZE=8
-unset VERBOSE
+VERBOSE=0
 unset TARGET
 
-# constants
-readonly CMD="$0"
+# vars
+unset FAIL
 
 # functions
 function print_help()
 {
 	printf '%s\n' "\
-$CMD [OPTION]... [TARGET]
+$0 [OPTION]... [TARGET]
 
 	-e, --exclude <expr>
-		posix extended regex expression
+		posix extended regular expression
+		do specify the leading ./ for absolute expressions
+
+		will override a previous value
 
 	-g, --git
 		do not exclude folders named .git automatically
-		note that it adds to the exclude regex with OR internally
-		-e, --exclude is therefore always in effect
 
 	-h, --help
 		print this help and exit
@@ -48,24 +49,24 @@ $CMD [OPTION]... [TARGET]
 
 	-l, --limit <limit>
 		line limit in characters
-		defaults to 80
+		defaults to '$LIMIT'
 
 	-s, --submodules
 		do not exclude git submodules automatically
-		note that it adds to the exclude regex with OR internally
-		-e, --exclude is therefore always in effect
-
-		by default git submodules are excluded
-		by parsing \$PWD/.gitmodules if it exists
-		if it does not exist nothing is excluded
-		the same applies to \$PWD/.gitmodules itself
+		applies to both the definition file and submodule paths
 
 	-t, --tab-size <size>
 		tab size in characters
-		defaults to 8
+		defaults to '$TAB_SIZE'
 
 	-v, --verbose
-		also print out results for files that pass tests"
+		print out results for files that pass checks
+		specify twice to print exclude regex prior to grep
+
+	EXIT CODE
+		0	all checked files compliant
+		1	at least one non-compliant file
+		*	when any command fails because of 'set -e'"
 
 	return 0
 }
@@ -83,6 +84,11 @@ do
 	case "$1" in
 	-e|--exclude)
 		EXCLUDE="$2"
+		# make it full-path covering regex (find wants it)
+		# prefix ^.* if not starting with ^
+		[[ ${EXCLUDE:0:1} != '^' ]] && EXCLUDE="^.*$EXCLUDE"
+		# append .*$ is not ending with $
+		[[ ${EXCLUDE: -1} != '$' ]] && EXCLUDE="${EXCLUDE}.*\$"
 		shift
 		;;
 	-g|--git)
@@ -107,7 +113,7 @@ do
 		shift
 		;;
 	-v|--verbose)
-		VERBOSE=true
+		(( ++VERBOSE ))
 		;;
 	*)
 		# target only allowed as final option
@@ -120,7 +126,13 @@ do
 done
 
 # verify options
-[[ ! -e $TARGET ]] && printf '%s\n' 'invalid target' && exit 1
+[[ ! -d $TARGET ]] && printf '%s\n' 'invalid target (not a dir)' && exit 1
+
+# cd to target before parsing anything
+cd "$TARGET"
+
+# wrap the original exclude in parentheses
+[[ $EXCLUDE ]] && EXCLUDE="($EXCLUDE)"
 
 # exclude .git if enabled
 if [[ ! $GIT ]]
@@ -132,28 +144,22 @@ fi
 # exclude git submodules if enabled
 if [[ ! $SUBMODULES && -f ./.gitmodules ]]
 then
-	# add entry block
-	[[ $EXCLUDE ]] && EXCLUDE+='|'
-	EXCLUDE+='(^'
-
 	# exclude ./.gitmodules
-	EXCLUDE+='(\./\.gitmodules)|'
+	[[ $EXCLUDE ]] && EXCLUDE+='|'
+	EXCLUDE+='(^\./\.gitmodules$)'
 
 	# add module paths
 	while read module
 	do
-		EXCLUDE+="(\\$module/.*)|"
+		EXCLUDE+="|(^$module/.*$)"
 	done \
-		< <(grep -o 'path = .*' ./.gitmodules \
-			| sed 's/path = /.\//')
-
-	# remove trailing |, add exit block
-	EXCLUDE="${EXCLUDE%?}$)"
+		< <(grep -o $'^[ \t]*path = .*' ./.gitmodules \
+			| sed $'s/[ \t]*path = /.\//' \
+			| sed $'s/\./\\\\./g')
 fi
 
-# cd and unset failure var
-cd "$TARGET"
-unset FAIL
+# print exclude regex if verbose enough
+(( $VERBOSE > 1 )) && printf '%s\n' "$(echo "$EXCLUDE" | sed 's/\t/\\t/g')"
 
 # loop over all files in path
 while IFS= read -r -d '' file
@@ -165,7 +171,7 @@ do
 		FAIL=true
 		printf 'LIMIT  FAIL %s\n' "$file"
 	else
-		[[ $VERBOSE ]] && printf 'LIMIT  PASS %s\n' "$file"
+		(( $VERBOSE > 0 )) && printf 'LIMIT  PASS %s\n' "$file"
 	fi
 
 	# continue if indent disabled
@@ -188,7 +194,7 @@ do
 		indent_match=$'(^$)|(^\t*([^\t ]| \\*))'
 		;;
 	*)
-		[[ $VERBOSE ]] && printf 'INDENT SKIP %s\n' "$file"
+		(( $VERBOSE > 0 )) && printf 'INDENT SKIP %s\n' "$file"
 		continue
 		;;
 	esac
@@ -199,13 +205,13 @@ do
 		FAIL=true
 		printf 'INDENT FAIL %s\n' "$file"
 	else
-		[[ $VERBOSE ]] && printf 'INDENT PASS %s\n' "$file"
+		(( $VERBOSE > 0 )) && printf 'INDENT PASS %s\n' "$file"
 	fi
 done \
 	< <(find . \
 	-regextype posix-extended \
 	-type f \
-	-not -regex "$EXCLUDE" \
+	\! -regex "$EXCLUDE" \
 	-exec grep -Iq . '{}' \; \
 	-and -print0)
 

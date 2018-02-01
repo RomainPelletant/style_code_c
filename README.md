@@ -1,23 +1,93 @@
 # CI CD / Style
 
-Various scripts that check code style and can easily be automated.
-Currently just one.
+Various scripts that check code style and can easily be used in CI.
+
+* `regex_check.sh` File content regex compliancy.
+* `line_limit.sh` Line limit and per-file indentation style.
+
+## regex\_check.sh
+
+Script that checks files for specified POSIX extended regular expression,
+defaulting to checking whether file is basic ASCII compliant.
+
+Primary use case is to avoid non-ASCII characters in source code. Script is
+flexible enough to be used in many other ways that deal with regex compliancy.
+
+```
+./regex_check.sh [OPTION]... [TARGET]
+
+        -d, --exclude-dir <glob>
+                directory name glob exclude from check
+                can be specified multiple times
+                for details read grep(1) --exclude-dir
+
+        -e, --exclude <expr>
+                posix extended regular expression
+                --exclude-dir and --exclude-file have better performance
+
+                do not specify the leading ./
+                if you need the ./ prefix, use --output-prefix
+
+                can be specified multiple times
+
+        -f, --exclude-file <glob>
+                filename glob to exclude from check
+                can be specified multiple times
+                for details read grep(1) --exclude
+
+        -g, --git
+                do not exclude folders named .git automatically
+
+        -h, --help
+                print this help and exit
+
+        -l, --locale
+                locale during grep execution
+                defaults to 'C'
+
+        -o, --output-prefix <string> <expr>
+                prefix all output with STRING
+                provide POSIX ERE EXPR to match STRING
+
+                mainly intended for prefixing ./ for --exclude used as
+                --output-prefix './' '\./'
+
+                will override a previous value
+
+        -r, --regex
+                posix extended regular expression for contents marked as valid
+                defaults to ASCII-only $'^[[:print:]\t]*$'
+
+        -s, --submodules
+                do not exclude git submodules automatically
+
+        -v, --verbose
+                print out the command string just before eval
+
+        EXIT CODE
+                0       all checked files compliant
+                1       at least one non-compliant file
+                2       internal error on eval
+                *       when any command before eval fails because of 'set -e'
+```
 
 ## line\_limit.sh
 
 Script that checks the line length of all text files in the specified target
-path. Used for enforcing line length limits automatically.
+path. Used for enforcing line length limits automatically. It also supports
+checking for consistent indention style on a per-file basis.
 
 ```
 ./line_limit.sh [OPTION]... [TARGET]
 
         -e, --exclude <expr>
-                posix extended regex expression
+                posix extended regular expression
+                do specify the leading ./ for absolute expressions
+
+                will override a previous value
 
         -g, --git
                 do not exclude folders named .git automatically
-                note that it adds to the exclude regex with OR internally
-                -e, --exclude is therefore always in effect
 
         -h, --help
                 print this help and exit
@@ -38,22 +108,22 @@ path. Used for enforcing line length limits automatically.
 
         -l, --limit <limit>
                 line limit in characters
-                defaults to 80
+                defaults to '80'
 
         -s, --submodules
                 do not exclude git submodules automatically
-                note that it adds to the exclude regex with OR internally
-                -e, --exclude is therefore always in effect
-
-                by default git submodules are excluded
-                by parsing $PWD/.gitmodules if it exists
-                if it does not exist nothing is excluded
-                the same applies to $PWD/.gitmodules itself
+                applies to both the definition file and submodule paths
 
         -t, --tab-size <size>
                 tab size in characters
-                defaults to 8
+                defaults to '8'
 
         -v, --verbose
-                also print out results for files that pass tests
+                print out results for files that pass checks
+                specify twice to print exclude regex prior to grep
+
+        EXIT CODE
+                0       all checked files compliant
+                1       at least one non-compliant file
+                *       when any command fails because of 'set -e'
 ```
