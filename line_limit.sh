@@ -19,7 +19,7 @@ unset FAIL
 function print_help()
 {
 	printf '%s\n' "\
-$0 [OPTION]... [TARGET]
+$0 [OPTION]... TARGET
 
 	-e, --exclude <expr>
 		posix extended regular expression

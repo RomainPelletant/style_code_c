@@ -18,7 +18,7 @@ unset TARGET
 function print_help()
 {
 	printf '%s\n' "\
-$0 [OPTION]... [TARGET]
+$0 [OPTION]... TARGET
 
 	-d, --exclude-dir <glob>
 		directory name glob exclude from check
