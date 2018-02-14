@@ -13,62 +13,68 @@ defaulting to checking whether file is basic ASCII compliant.
 Primary use case is to avoid non-ASCII characters in source code. Script is
 flexible enough to be used in many other ways that deal with regex compliancy.
 
+Dependencies:
+* bash
+* grep
+* sed
+
 ```
-./regex_check.sh [OPTION]... [TARGET]
+./regex_check.sh [OPTION]... TARGET
 
-        -d, --exclude-dir <glob>
-                directory name glob exclude from check
-                can be specified multiple times
-                for details read grep(1) --exclude-dir
+	-d, --exclude-dir <glob>
+		directory name glob exclude from check
+		can be specified multiple times
+		for details read grep(1) --exclude-dir
 
-        -e, --exclude <expr>
-                posix extended regular expression
-                --exclude-dir and --exclude-file have better performance
+	-e, --exclude <expr>
+		posix extended regular expression
+		--exclude-dir and --exclude-file have better performance
 
-                do not specify the leading ./
-                if you need the ./ prefix, use --output-prefix
+		do not specify the leading ./ for absolute paths
+		if you need the ./ prefix, use --output-prefix and do prefix
+			--exclude's expr with whatever is specified there
 
-                can be specified multiple times
+		can be specified multiple times
 
-        -f, --exclude-file <glob>
-                filename glob to exclude from check
-                can be specified multiple times
-                for details read grep(1) --exclude
+	-f, --exclude-file <glob>
+		filename glob to exclude from check
+		can be specified multiple times
+		for details read grep(1) --exclude
 
-        -g, --git
-                do not exclude folders named .git automatically
+	-g, --git
+		do not exclude folders named .git automatically
 
-        -h, --help
-                print this help and exit
+	-h, --help
+		print this help and exit
 
-        -l, --locale
-                locale during grep execution
-                defaults to 'C'
+	-l, --locale
+		locale during grep execution
+		defaults to 'C'
 
-        -o, --output-prefix <string> <expr>
-                prefix all output with STRING
-                provide POSIX ERE EXPR to match STRING
+	-o, --output-prefix <string> <expr>
+		prefix all output with STRING
+		provide POSIX ERE EXPR to match STRING
 
-                mainly intended for prefixing ./ for --exclude used as
-                --output-prefix './' '\./'
+		mainly intended for prefixing ./ for --exclude used as
+		--output-prefix './' '\./'
 
-                will override a previous value
+		will override a previous value
 
-        -r, --regex
-                posix extended regular expression for contents marked as valid
-                defaults to ASCII-only $'^[[:print:]\t]*$'
+	-r, --regex
+		posix extended regular expression for contents marked as valid
+		defaults to ASCII-only $'^[[:print:]\t]*$'
 
-        -s, --submodules
-                do not exclude git submodules automatically
+	-s, --submodules
+		do not exclude git submodules automatically
 
-        -v, --verbose
-                print out the command string just before eval
+	-v, --verbose
+		print out the command string just before eval
 
-        EXIT CODE
-                0       all checked files compliant
-                1       at least one non-compliant file
-                2       internal error on eval
-                *       when any command before eval fails because of 'set -e'
+	EXIT CODE
+		0	all checked files compliant
+		1	at least one non-compliant file
+		2	internal error on eval
+		*	when any command before eval fails because of 'set -e'
 ```
 
 ## line\_limit.sh
@@ -77,53 +83,62 @@ Script that checks the line length of all text files in the specified target
 path. Used for enforcing line length limits automatically. It also supports
 checking for consistent indention style on a per-file basis.
 
+Dependencies:
+* bash
+* expand
+* grep
+* sed
+
 ```
-./line_limit.sh [OPTION]... [TARGET]
+./line_limit.sh [OPTION]... TARGET
 
-        -e, --exclude <expr>
-                posix extended regular expression
-                do specify the leading ./ for absolute expressions
+	-e, --exclude <expr>
+		posix extended regular expression
 
-                will override a previous value
+		do not specify the leading ./ for absolute paths
+		if you need the ./ prefix, bug Melvin to implement
+			--output-prefix like in regex_check.sh
 
-        -g, --git
-                do not exclude folders named .git automatically
+		can be specified multiple times
 
-        -h, --help
-                print this help and exit
+	-g, --git
+		do not exclude folders named .git automatically
 
-        -i, --indent
-                enable automatic indent type checking
+	-h, --help
+		print this help and exit
 
-                the first line of a file that starts with either
-                a tab OR a space and contains non-whitespace afterwards will
-                determine the indent checking to be used for the
-                rest of the file
+	-i, --indent
+		enable automatic indent type checking
 
-                if the first indent is mixed, as in contains both
-                tabs and spaces, the very first character will be used
+		the first line of a file that starts with either
+		a tab OR a space and contains non-whitespace afterwards will
+		determine the indent checking to be used for the
+		rest of the file
 
-                an exception is made for '\t *' for multi-line c-style comments
-                during both indent detection and indent checking
+		if the first indent is mixed, as in contains both
+		tabs and spaces, the very first character will be used
 
-        -l, --limit <limit>
-                line limit in characters
-                defaults to '80'
+		an exception is made for '\t *' for multi-line c-style comments
+		during both indent detection and indent checking
 
-        -s, --submodules
-                do not exclude git submodules automatically
-                applies to both the definition file and submodule paths
+	-l, --limit <limit>
+		line limit in characters
+		defaults to '80'
 
-        -t, --tab-size <size>
-                tab size in characters
-                defaults to '8'
+	-s, --submodules
+		do not exclude git submodules automatically
+		applies to both the definition file and submodule paths
 
-        -v, --verbose
-                print out results for files that pass checks
-                specify twice to print exclude regex prior to grep
+	-t, --tab-size <size>
+		tab size in characters
+		defaults to '8'
 
-        EXIT CODE
-                0       all checked files compliant
-                1       at least one non-compliant file
-                *       when any command fails because of 'set -e'
+	-v, --verbose
+		print out the exclude regex before find
+
+	EXIT CODE
+		0	all checked files compliant
+		1	at least one non-compliant file
+		2	internal error
+		*	when any command fails because of 'set -e'
 ```
