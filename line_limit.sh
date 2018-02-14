@@ -85,7 +85,7 @@ function exclude()
 	# make it full-path covering regex (find wants it)
 	# prefix ^.* if not starting with ^
 	[[ ${tmp:0:1} != '^' ]] && tmp="^.*$tmp"
-	# append .*$ is not ending with $
+	# append .*$ if not ending with $
 	[[ ${tmp: -1} != '$' ]] && tmp="$tmp.*\$"
 
 	[[ $EXCLUDE ]] && EXCLUDE+='|'
