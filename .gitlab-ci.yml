@@ -14,7 +14,7 @@ line_limit:
   stage: analyse
   allow_failure: true
   script:
-    - ./line_limit.sh -e '^\./test/line_limit/' -i -v -v .
+    - ./line_limit.sh -e '^test/line_limit/' -i -v .
 
 test/line_limit:
   stage: test
