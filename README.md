@@ -13,6 +13,11 @@ defaulting to checking whether file is basic ASCII compliant.
 Primary use case is to avoid non-ASCII characters in source code. Script is
 flexible enough to be used in many other ways that deal with regex compliancy.
 
+Dependencies:
+* bash
+* grep
+* sed
+
 ```
 ./regex_check.sh [OPTION]... TARGET
 
@@ -77,6 +82,12 @@ flexible enough to be used in many other ways that deal with regex compliancy.
 Script that checks the line length of all text files in the specified target
 path. Used for enforcing line length limits automatically. It also supports
 checking for consistent indention style on a per-file basis.
+
+Dependencies:
+* bash
+* expand
+* grep
+* sed
 
 ```
 ./line_limit.sh [OPTION]... TARGET
