@@ -164,8 +164,7 @@ then
 		exclude "^$module/.*$"
 	done \
 		< <(grep -o $'^[ \t]*path = .*' ./.gitmodules \
-			| sed $'s/[ \t]*path = /.\//' \
-			| sed $'s/\./\\\\./g')
+			| sed $'s/[ \t]*path = //')
 fi
 
 # print exclude regex if verbose
