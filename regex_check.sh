@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+set -o pipefail
 
 # defaults
 unset EXCLUDE_DIR
@@ -12,6 +13,7 @@ LOCALE='C'
 unset OUTPUT_PREFIX
 unset OUTPUT_PREFIX_EXPR
 REGEX=$'^[[:print:]\t]*$'
+unset VERBOSE
 unset TARGET
 
 # functions
@@ -29,8 +31,9 @@ $0 [OPTION]... TARGET
 		posix extended regular expression
 		--exclude-dir and --exclude-file have better performance
 
-		do not specify the leading ./
-		if you need the ./ prefix, use --output-prefix
+		do not specify the leading ./ for absolute paths
+		if you need the ./ prefix, use --output-prefix and do prefix
+			--exclude's expr with whatever is specified there
 
 		can be specified multiple times
 

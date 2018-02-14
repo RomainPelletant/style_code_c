@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+set -o pipefail
 
 # defaults
 unset EXCLUDE
@@ -9,7 +10,7 @@ unset INDENT
 LIMIT=80
 unset SUBMODULES
 TAB_SIZE=8
-VERBOSE=0
+unset VERBOSE
 unset TARGET
 
 # vars
@@ -23,9 +24,12 @@ $0 [OPTION]... TARGET
 
 	-e, --exclude <expr>
 		posix extended regular expression
-		do specify the leading ./ for absolute expressions
 
-		will override a previous value
+		do not specify the leading ./ for absolute paths
+		if you need the ./ prefix, bug Melvin to implement
+			--output-prefix like in regex_check.sh
+
+		can be specified multiple times
 
 	-g, --git
 		do not exclude folders named .git automatically
@@ -60,15 +64,32 @@ $0 [OPTION]... TARGET
 		defaults to '$TAB_SIZE'
 
 	-v, --verbose
-		print out results for files that pass checks
-		specify twice to print exclude regex prior to grep
+		print out the exclude regex before find
 
 	EXIT CODE
 		0	all checked files compliant
 		1	at least one non-compliant file
+		2	internal error
 		*	when any command fails because of 'set -e'"
 
 	return 0
+}
+
+function exclude()
+{
+	[[ ! $1 ]] && printf 'invalid exclude()\n' && exit 1
+
+	tmp="$1"
+	# if already absolute, prefix the ./ which find needs
+	[[ ${tmp:0:1} == '^' ]] && tmp="^\\./${tmp:1}"
+	# make it full-path covering regex (find wants it)
+	# prefix ^.* if not starting with ^
+	[[ ${tmp:0:1} != '^' ]] && tmp="^.*$tmp"
+	# append .*$ is not ending with $
+	[[ ${tmp: -1} != '$' ]] && tmp="$tmp.*\$"
+
+	[[ $EXCLUDE ]] && EXCLUDE+='|'
+	EXCLUDE+="($tmp)"
 }
 
 # print usage if no options
@@ -83,12 +104,7 @@ while (( $# > 0 ))
 do
 	case "$1" in
 	-e|--exclude)
-		EXCLUDE="$2"
-		# make it full-path covering regex (find wants it)
-		# prefix ^.* if not starting with ^
-		[[ ${EXCLUDE:0:1} != '^' ]] && EXCLUDE="^.*$EXCLUDE"
-		# append .*$ is not ending with $
-		[[ ${EXCLUDE: -1} != '$' ]] && EXCLUDE="${EXCLUDE}.*\$"
+		exclude "$2"
 		shift
 		;;
 	-g|--git)
@@ -113,7 +129,7 @@ do
 		shift
 		;;
 	-v|--verbose)
-		(( ++VERBOSE ))
+		VERBOSE=true
 		;;
 	*)
 		# target only allowed as final option
@@ -131,48 +147,53 @@ done
 # cd to target before parsing anything
 cd "$TARGET"
 
-# wrap the original exclude in parentheses
-[[ $EXCLUDE ]] && EXCLUDE="($EXCLUDE)"
-
 # exclude .git if enabled
 if [[ ! $GIT ]]
 then
-	[[ $EXCLUDE ]] && EXCLUDE+='|'
-	EXCLUDE+='(^.*/\.git/.*$)'
+	exclude '^\.git/.*$'
 fi
 
 # exclude git submodules if enabled
 if [[ ! $SUBMODULES && -f ./.gitmodules ]]
 then
-	# exclude ./.gitmodules
-	[[ $EXCLUDE ]] && EXCLUDE+='|'
-	EXCLUDE+='(^\./\.gitmodules$)'
+	exclude '^\.gitmodules$'
 
 	# add module paths
 	while read module
 	do
-		EXCLUDE+="|(^$module/.*$)"
+		exclude "^$module/.*$"
 	done \
 		< <(grep -o $'^[ \t]*path = .*' ./.gitmodules \
 			| sed $'s/[ \t]*path = /.\//' \
 			| sed $'s/\./\\\\./g')
 fi
 
-# print exclude regex if verbose enough
-(( $VERBOSE > 1 )) && printf '%s\n' "$(echo "$EXCLUDE" | sed 's/\t/\\t/g')"
+# print exclude regex if verbose
+[[ $VERBOSE ]] && printf '%s\n' "$(echo "$EXCLUDE" | sed 's/\t/\\t/g')"
 
 # loop over all files in path
 while IFS= read -r -d '' file
 do
-	# check if file exceeds limit
-	if [[ $(expand --tabs="$TAB_SIZE" "$file" \
-		| awk "{ if (length(\$0) > $LIMIT) print \"y\" }") ]]
-	then
+	# strip leading ./
+	file="${file:2}"
+
+	set +e
+	# check line limit for file
+	expand --tabs="$TAB_SIZE" "$file" \
+		| grep -EHInv --label="$file" "^.{0,$LIMIT}$"
+
+	case $? in
+	0)
 		FAIL=true
-		printf 'LIMIT  FAIL %s\n' "$file"
-	else
-		(( $VERBOSE > 0 )) && printf 'LIMIT  PASS %s\n' "$file"
-	fi
+		;;
+	1)
+		# no match, so all is ok
+		;;
+	*)
+		exit 2
+		;;
+	esac
+	set -e
 
 	# continue if indent disabled
 	[[ ! $INDENT ]] && continue
@@ -181,10 +202,9 @@ do
 	# do not match c-style block comments to avoid misdetection as space
 	# grep returns 1 when no match
 	set +e
-	indent_type="$(grep -Eo -m 1 $'^[ \t]+[^ \t\\*]' "$file")"
+	indent_type="$(grep -EIo -m 1 $'^[ \t]+[^ \t\\*]' "$file")"
 	set -e
-	indent_type="${indent_type:0:1}"
-	case "$indent_type" in
+	case "${indent_type:0:1}" in
 	$' ')
 		indent_match=$'(^$)|(^ *[^ \t])'
 		;;
@@ -194,26 +214,33 @@ do
 		indent_match=$'(^$)|(^\t*([^\t ]| \\*))'
 		;;
 	*)
-		(( $VERBOSE > 0 )) && printf 'INDENT SKIP %s\n' "$file"
+		# no indentations in file, skip
 		continue
 		;;
 	esac
 
 	# check for violating lines
-	if [[ $(grep -Ev -m 1 "$indent_match" "$file") ]]
-	then
+	set +e
+	grep -EHnv "$indent_match" "$file"
+
+	case $? in
+	0)
 		FAIL=true
-		printf 'INDENT FAIL %s\n' "$file"
-	else
-		(( $VERBOSE > 0 )) && printf 'INDENT PASS %s\n' "$file"
-	fi
+		;;
+	1)
+		# no match, so all is ok
+		;;
+	*)
+		exit 2
+		;;
+	esac
+	set -e
 done \
 	< <(find . \
 	-regextype posix-extended \
 	-type f \
 	\! -regex "$EXCLUDE" \
-	-exec grep -Iq . '{}' \; \
-	-and -print0)
+	-print0)
 
 [[ $FAIL ]] && exit 1
 exit 0
