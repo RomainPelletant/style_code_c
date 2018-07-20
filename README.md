@@ -2,8 +2,40 @@
 
 Various scripts that check code style and can easily be used in CI.
 
+* `clang_format.sh` Source code format checker and in-place modifier.
 * `line_limit.sh` Line limit and per-file indentation style.
 * `regex_check.sh` File content regex compliancy.
+
+## clang\_format.sh
+
+Script their uses clang-format to check or format source code. When checking
+replacements are reported in XML. When formatting sources are modified in-place.
+
+Dependencies:
+* bash
+* clang-format
+* grep
+
+```
+usage: ./clang_format.sh check|format [clang-format path]
+	always call from root of repo
+
+	check
+		check sources and report replacements
+
+	format
+		format sources in place
+
+	[clang-format path]
+		path to clang-format, defaults to searching path
+
+	EXIT CODE
+		0	[check] no replacements
+			[format] completed ok
+		1	[check] found replacements
+		2	internal error
+		*	when any commands fails because of 'set -e'
+```
 
 ## line\_limit.sh
 
