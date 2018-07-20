@@ -2,8 +2,74 @@
 
 Various scripts that check code style and can easily be used in CI.
 
-* `regex_check.sh` File content regex compliancy.
 * `line_limit.sh` Line limit and per-file indentation style.
+* `regex_check.sh` File content regex compliancy.
+
+## line\_limit.sh
+
+Script that checks the line length of all text files in the specified target
+path. Used for enforcing line length limits automatically. It also supports
+checking for consistent indention style on a per-file basis.
+
+Dependencies:
+* bash
+* expand
+* grep
+* sed
+
+```
+./line_limit.sh [OPTION]... TARGET
+
+	-e, --exclude <expr>
+		posix extended regular expression
+
+		do not specify the leading ./ for absolute paths
+		if you need the ./ prefix, bug Melvin to implement
+			--output-prefix like in regex_check.sh
+
+		can be specified multiple times
+
+	-g, --git
+		do not exclude folders named .git automatically
+
+	-h, --help
+		print this help and exit
+
+	-i, --indent
+		enable automatic indent type checking
+
+		the first line of a file that starts with either
+		a tab OR a space and contains non-whitespace afterwards will
+		determine the indent checking to be used for the
+		rest of the file
+
+		if the first indent is mixed, as in contains both
+		tabs and spaces, the very first character will be used
+
+		an exception is made for '\t *' for multi-line c-style comments
+		during both indent detection and indent checking
+
+	-l, --limit <limit>
+		line limit in characters
+		defaults to '80'
+
+	-s, --submodules
+		do not exclude git submodules automatically
+		applies to both the definition file and submodule paths
+
+	-t, --tab-size <size>
+		tab size in characters
+		defaults to '8'
+
+	-v, --verbose
+		print out the exclude regex before find
+
+	EXIT CODE
+		0	all checked files compliant
+		1	at least one non-compliant file
+		2	internal error
+		*	when any command fails because of 'set -e'
+```
 
 ## regex\_check.sh
 
@@ -75,70 +141,4 @@ Dependencies:
 		1	at least one non-compliant file
 		2	internal error on eval
 		*	when any command before eval fails because of 'set -e'
-```
-
-## line\_limit.sh
-
-Script that checks the line length of all text files in the specified target
-path. Used for enforcing line length limits automatically. It also supports
-checking for consistent indention style on a per-file basis.
-
-Dependencies:
-* bash
-* expand
-* grep
-* sed
-
-```
-./line_limit.sh [OPTION]... TARGET
-
-	-e, --exclude <expr>
-		posix extended regular expression
-
-		do not specify the leading ./ for absolute paths
-		if you need the ./ prefix, bug Melvin to implement
-			--output-prefix like in regex_check.sh
-
-		can be specified multiple times
-
-	-g, --git
-		do not exclude folders named .git automatically
-
-	-h, --help
-		print this help and exit
-
-	-i, --indent
-		enable automatic indent type checking
-
-		the first line of a file that starts with either
-		a tab OR a space and contains non-whitespace afterwards will
-		determine the indent checking to be used for the
-		rest of the file
-
-		if the first indent is mixed, as in contains both
-		tabs and spaces, the very first character will be used
-
-		an exception is made for '\t *' for multi-line c-style comments
-		during both indent detection and indent checking
-
-	-l, --limit <limit>
-		line limit in characters
-		defaults to '80'
-
-	-s, --submodules
-		do not exclude git submodules automatically
-		applies to both the definition file and submodule paths
-
-	-t, --tab-size <size>
-		tab size in characters
-		defaults to '8'
-
-	-v, --verbose
-		print out the exclude regex before find
-
-	EXIT CODE
-		0	all checked files compliant
-		1	at least one non-compliant file
-		2	internal error
-		*	when any command fails because of 'set -e'
 ```
