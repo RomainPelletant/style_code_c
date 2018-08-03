@@ -8,17 +8,30 @@ Various scripts that check code style and can easily be used in CI.
 
 ## clang\_format.sh
 
-Script their uses clang-format to check or format source code. When checking
+Script that uses clang-format to check or format source code. When checking
 replacements are reported in XML. When formatting sources are modified in-place.
 
 Dependencies:
 * bash
 * clang-format
 * grep
+* sort
 
 ```
-usage: ./clang_format.sh check|format [clang-format path]
-	always call from root of repo
+usage: ./clang_format.sh [OPTION]... check|format
+
+	-c, --clang-format <PATH>
+		path to clang-format,
+		defaults to the result of 'command -v clang-format'
+
+	-p, --pattern <PATTERN>
+		pattern to use to get which files to check,
+		defaults to '{src,include,test}/**/*.{c,h,cpp,hpp}' if nothing
+		is specified,
+		can be specified multiple times
+
+	-v, --verbose
+		print list of files as that are checked
 
 	check
 		check sources and report replacements
@@ -26,15 +39,13 @@ usage: ./clang_format.sh check|format [clang-format path]
 	format
 		format sources in place
 
-	[clang-format path]
-		path to clang-format, defaults to searching path
-
 	EXIT CODE
 		0	[check] no replacements
 			[format] completed ok
 		1	[check] found replacements
 		2	internal error
-		*	when any commands fails because of 'set -e'
+		3	invalid arguments
+		*	when any commands fails because of 'set -e'"
 ```
 
 ## line\_limit.sh
