@@ -16,6 +16,12 @@ line_limit:
   script:
     - ./line_limit.sh -e '^test/line_limit/' -i -v .
 
+clang_format:
+  image: git.mel.vin:5005/cicd/style/cicd/clang_format:0.0
+  stage: test
+  script:
+    - ./test/clang_format/test.sh -v
+
 test/line_limit:
   stage: test
   script:
